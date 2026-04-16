@@ -1,3 +1,6 @@
+const extensionApi = createExtensionApi();
+const isExtensionPreview = !hasChromeExtensionApi();
+
 const form = document.getElementById("fax-form");
 const faxListEl = document.getElementById("fax-list");
 const emptyStateEl = document.getElementById("empty-state");
@@ -9,6 +12,7 @@ const appShellEl = document.getElementById("app-shell");
 const setupFormEl = document.getElementById("setup-form");
 const setupApiKeyEl = document.getElementById("setup-api-key");
 const setupStatusEl = document.getElementById("setup-status");
+const previewBannerEls = document.querySelectorAll("[data-preview-banner]");
 
 const AUTO_REFRESH_INTERVAL_MS = 10000;
 const AUTO_REFRESH_DURATION_MS = 120000;
@@ -29,17 +33,22 @@ let latestHistoryItems = [];
 
 form.addEventListener("submit", onSubmitFax);
 refreshButton.addEventListener("click", () => renderFaxes());
-optionsButton.addEventListener("click", () => chrome.runtime.openOptionsPage());
+optionsButton.addEventListener("click", () => extensionApi.runtime.openOptionsPage());
 setupFormEl.addEventListener("submit", onSetupSubmit);
 
 init();
 
 async function init() {
   setHardcodedFromNumber();
+  syncPreviewBanners();
 
-  const { settings = {} } = await chrome.storage.sync.get(["settings"]);
+  const { settings = {} } = await extensionApi.storage.sync.get(["settings"]);
   if (!String(settings.apiKey || "").trim()) {
     showSetupScreen();
+    if (isExtensionPreview) {
+      setupStatusEl.textContent = "Preview mode: settings are stored only in this browser.";
+      setupStatusEl.style.color = "var(--accent)";
+    }
     return;
   }
 
@@ -47,15 +56,20 @@ async function init() {
   bindAppUi();
   await applyLaunchContext();
   await renderFaxes();
+  if (isExtensionPreview) {
+    setStatus("Preview mode: running without extension APIs.");
+  }
 }
 
 function showSetupScreen() {
+  syncPreviewBanners();
   appShellEl.hidden = true;
   setupScreenEl.hidden = false;
   setupStatusEl.textContent = "";
 }
 
 function showAppShell() {
+  syncPreviewBanners();
   setupScreenEl.hidden = true;
   appShellEl.hidden = false;
 }
@@ -70,10 +84,10 @@ async function onSetupSubmit(event) {
     return;
   }
 
-  const { settings = {} } = await chrome.storage.sync.get(["settings"]);
+  const { settings = {} } = await extensionApi.storage.sync.get(["settings"]);
   const apiBase = String(settings.apiBase || "https://api.medsender.com/api/v2").trim().replace(/\/$/, "");
 
-  await chrome.storage.sync.set({
+  await extensionApi.storage.sync.set({
     settings: {
       ...settings,
       apiKey,
@@ -88,7 +102,7 @@ async function onSetupSubmit(event) {
 }
 
 async function applyLaunchContext() {
-  const { easyFaxLaunchContext = null } = await chrome.storage.local.get(["easyFaxLaunchContext"]);
+  const { easyFaxLaunchContext = null } = await extensionApi.storage.local.get(["easyFaxLaunchContext"]);
   if (!easyFaxLaunchContext) {
     return;
   }
@@ -114,7 +128,7 @@ async function applyLaunchContext() {
     setStatus(`Loaded AdvancedMD context for ${patientHint}.`);
   }
 
-  await chrome.storage.local.remove("easyFaxLaunchContext");
+  await extensionApi.storage.local.remove("easyFaxLaunchContext");
 }
 
 function buildLaunchPdfFileName(context) {
@@ -616,7 +630,7 @@ async function hydrateEmailStatuses(emails, settings) {
 }
 
 async function getLocalEmailHistory() {
-  const { [LOCAL_EMAIL_HISTORY_KEY]: emailHistory = [] } = await chrome.storage.local.get([LOCAL_EMAIL_HISTORY_KEY]);
+  const { [LOCAL_EMAIL_HISTORY_KEY]: emailHistory = [] } = await extensionApi.storage.local.get([LOCAL_EMAIL_HISTORY_KEY]);
   if (!Array.isArray(emailHistory)) {
     return [];
   }
@@ -631,7 +645,7 @@ async function addLocalEmailHistoryEntry(entry) {
 }
 
 async function setLocalEmailHistory(items) {
-  await chrome.storage.local.set({
+  await extensionApi.storage.local.set({
     [LOCAL_EMAIL_HISTORY_KEY]: items.slice(0, MAX_LOCAL_EMAIL_HISTORY)
   });
 }
@@ -655,11 +669,101 @@ function extractErrorMessage(error) {
 }
 
 async function getApiSettings() {
-  const { settings = {} } = await chrome.storage.sync.get(["settings"]);
+  const { settings = {} } = await extensionApi.storage.sync.get(["settings"]);
   const apiKey = (settings.apiKey || "").trim();
   const apiBase = (settings.apiBase || "https://api.medsender.com/api/v2").trim().replace(/\/$/, "");
   if (!apiKey) throw new Error("Missing API key. Open API Settings.");
   return { apiKey, apiBase };
+}
+
+function hasChromeExtensionApi() {
+  return typeof chrome !== "undefined"
+    && typeof chrome.storage !== "undefined"
+    && typeof chrome.storage.sync !== "undefined"
+    && typeof chrome.storage.local !== "undefined"
+    && typeof chrome.runtime !== "undefined";
+}
+
+function createExtensionApi() {
+  if (hasChromeExtensionApi()) {
+    return chrome;
+  }
+
+  return {
+    storage: {
+      sync: createStorageArea("easyfax.preview.sync"),
+      local: createStorageArea("easyfax.preview.local")
+    },
+    runtime: {
+      openOptionsPage() {
+        window.location.href = "options.html";
+      }
+    }
+  };
+}
+
+function createStorageArea(namespace) {
+  return {
+    async get(keys) {
+      const store = readPreviewStore(namespace);
+      if (Array.isArray(keys)) {
+        return keys.reduce((accumulator, key) => {
+          accumulator[key] = store[key];
+          return accumulator;
+        }, {});
+      }
+
+      if (typeof keys === "string") {
+        return {
+          [keys]: store[keys]
+        };
+      }
+
+      if (keys && typeof keys === "object") {
+        return Object.entries(keys).reduce((accumulator, [key, defaultValue]) => {
+          accumulator[key] = Object.prototype.hasOwnProperty.call(store, key) ? store[key] : defaultValue;
+          return accumulator;
+        }, {});
+      }
+
+      return { ...store };
+    },
+    async set(items) {
+      const store = readPreviewStore(namespace);
+      writePreviewStore(namespace, {
+        ...store,
+        ...items
+      });
+    },
+    async remove(keys) {
+      const store = readPreviewStore(namespace);
+      const nextStore = { ...store };
+      const keyList = Array.isArray(keys) ? keys : [keys];
+      for (const key of keyList) {
+        delete nextStore[key];
+      }
+      writePreviewStore(namespace, nextStore);
+    }
+  };
+}
+
+function readPreviewStore(namespace) {
+  try {
+    const raw = window.localStorage.getItem(namespace);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePreviewStore(namespace, value) {
+  window.localStorage.setItem(namespace, JSON.stringify(value));
+}
+
+function syncPreviewBanners() {
+  for (const bannerEl of previewBannerEls) {
+    bannerEl.hidden = !isExtensionPreview;
+  }
 }
 
 function normalizeFaxes(result) {

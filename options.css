@@ -29,6 +29,22 @@ body {
   padding: 20px;
 }
 
+.preview-banner {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #b7ead9;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #dff7ee 100%);
+  color: #0a7059;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.preview-banner[hidden] {
+  display: none !important;
+}
+
 h1 {
   margin: 0 0 6px;
 }

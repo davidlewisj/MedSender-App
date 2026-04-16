@@ -25,6 +25,26 @@ body {
   color: var(--ink);
 }
 
+.preview-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #b7ead9;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #dff7ee 100%);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.preview-banner[hidden] {
+  display: none !important;
+}
+
+.preview-banner-app {
+  margin: 14px 14px 0;
+}
+
 .setup-screen[hidden],
 .app[hidden],
 .panel[hidden] {
@@ -75,15 +95,20 @@ body {
 .brand-name { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
 .brand-subtitle { font-size: 11px; color: var(--muted); margin-top: 1px; }
 .topbar-settings {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px;
-  border: 1px solid var(--border); border-radius: 8px;
-  background: transparent; color: var(--muted); cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 0;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
-.topbar-settings:hover { background: var(--bg); color: var(--ink); transform: rotate(15deg); }
-.topbar-settings:active { transform: rotate(25deg) scale(0.95); }
-.topbar-settings svg { width: 16px; height: 16px; }
+.topbar-settings:hover { color: var(--ink); transform: rotate(12deg) scale(1.04); }
+.topbar-settings:active { transform: rotate(12deg) scale(0.96); }
+.topbar-settings svg { width: 22px; height: 22px; }
 
 /* Tabs */
 .tabs {
@@ -94,6 +119,10 @@ body {
 }
 .tab {
   flex: 1; border: none; background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   color: var(--muted); font: inherit; font-size: 13px; font-weight: 500;
   padding: 10px 0; cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -101,6 +130,16 @@ body {
 }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 .tab:hover:not(.active) { color: var(--ink); }
+
+.tab-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.history-tab-icon {
+  opacity: 0.9;
+}
 
 /* Panels */
 .panels { padding: 14px; }

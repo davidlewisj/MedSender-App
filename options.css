@@ -1,0 +1,74 @@
+:root {
+  --bg: #eef7f3;
+  --card: #ffffff;
+  --ink: #13372c;
+  --line: #cfdfd8;
+  --accent: #0e8f6f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, #f5fbf8 0%, var(--bg) 60%);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.settings {
+  width: min(560px, 100%);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+h1 {
+  margin: 0 0 6px;
+}
+
+p {
+  margin: 0 0 14px;
+}
+
+form {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+input {
+  border: 1px solid #bdd3c9;
+  border-radius: 8px;
+  padding: 10px;
+  font: inherit;
+}
+
+button {
+  justify-self: start;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#status {
+  margin-top: 10px;
+  min-height: 1.1rem;
+  color: #146b54;
+}

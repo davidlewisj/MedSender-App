@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyFax Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="settings">
+    <h1>EasyFax Settings</h1>
+    <p>A MedSender extension. Configure your API connection.</p>
+
+    <form id="settings-form">
+      <label>
+        API key
+        <input id="api-key" name="apiKey" type="password" placeholder="sk_test_..." autocomplete="off" required />
+      </label>
+
+      <label>
+        API base URL
+        <input id="api-base" name="apiBase" type="url" placeholder="https://api.medsender.com/api/v2" required />
+      </label>
+
+      <button type="submit">Save Settings</button>
+    </form>
+
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>

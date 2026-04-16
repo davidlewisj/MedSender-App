@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyFax</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="setup-screen" id="setup-screen" hidden>
+    <div class="setup-card">
+      <div class="topbar-brand setup-brand">
+        <svg class="brand-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#0e8f6f"/>
+          <path d="M8 11h16M8 16h10M8 21h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="24" cy="21" r="4" fill="#fff" opacity=".15"/>
+          <path d="M22 21l1.5 1.5L26 19" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="brand-name">EasyFax</div>
+          <div class="brand-subtitle">A MedSender Extension</div>
+        </div>
+      </div>
+      <p class="setup-copy">Add your API key once and you are ready to fax.</p>
+      <form id="setup-form" class="setup-form">
+        <label class="field">
+          <span class="field-label">API key</span>
+          <input id="setup-api-key" name="apiKey" type="password" placeholder="sk_test_..." autocomplete="off" required />
+        </label>
+        <button type="submit" class="btn-primary">Save and Continue</button>
+      </form>
+      <p id="setup-status" class="status-bar" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <div class="app" id="app-shell" hidden>
+
+    <header class="topbar">
+      <div class="topbar-brand">
+        <svg class="brand-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#0e8f6f"/>
+          <path d="M8 11h16M8 16h10M8 21h13" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="24" cy="21" r="4" fill="#fff" opacity=".15"/>
+          <path d="M22 21l1.5 1.5L26 19" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="brand-name">EasyFax</div>
+          <div class="brand-subtitle">A MedSender Extension</div>
+        </div>
+      </div>
+      <button id="open-options" type="button" class="topbar-settings" title="API Settings" aria-label="API Settings">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M10 2v1.5M10 16.5v1.5M2 10h1.5M16.5 10h1.5M4 4l1 1M15 15l1 1M4 16l1-1M15 5l1-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" id="tab-send" role="tab" aria-selected="true" aria-controls="panel-send">Send</button>
+      <button class="tab" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history">History</button>
+    </nav>
+
+    <div class="panels">
+
+      <section id="panel-send" class="panel" role="tabpanel" aria-labelledby="tab-send">
+        <form id="fax-form">
+          <div class="field-row">
+            <label class="field">
+              <span class="field-label">From</span>
+              <input id="from-number" name="fromNumber" type="text" required value="+14252074289" readonly />
+            </label>
+            <label class="field">
+              <span class="field-label">To (Fax or Email)</span>
+              <input id="to-number" name="toNumber" type="text" required placeholder="+13125550123 or doctor@example.com" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Recipient name <span class="optional">optional</span></span>
+            <input id="recipient-name" name="recipientName" type="text" placeholder="Dr. Smith" maxlength="80" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">PDF file</span>
+            <div class="file-drop" id="file-drop">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v9M6 8l4-5 4 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span id="file-label">Choose PDF or drag here</span>
+              <input id="fax-file" name="faxFile" type="file" accept="application/pdf" />
+            </div>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Note <span class="optional">optional</span></span>
+            <textarea id="cover-message" name="coverMessage" rows="2" maxlength="240" placeholder="Internal note (not sent in fax)"></textarea>
+          </label>
+
+          <button type="submit" class="btn-primary" id="send-btn">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M17 10H3M17 10l-5-5M17 10l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Send Fax
+          </button>
+        </form>
+        <p id="send-status" class="status-bar" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="panel-history" class="panel" role="tabpanel" aria-labelledby="tab-history" hidden>
+        <div class="history-head">
+          <div class="history-left">
+            <span class="history-count" id="history-count"></span>
+            <div class="history-filters" role="group" aria-label="History filters">
+              <button type="button" class="history-filter-btn active" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" class="history-filter-btn" data-filter="fax" aria-pressed="false">Fax</button>
+              <button type="button" class="history-filter-btn" data-filter="email" aria-pressed="false">Email</button>
+            </div>
+          </div>
+          <button id="refresh-faxes" type="button" class="btn-icon btn-refresh" title="Refresh" aria-label="Refresh fax list">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16.5 4.5a6 6 0 01-1.5 11.85M3.5 15.5a6 6 0 001.5-11.85M6 3l2 4H4M14 17l-2-4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <ul id="fax-list" class="fax-list"></ul>
+        <p id="empty-state" class="empty-state">No faxes to display yet.</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

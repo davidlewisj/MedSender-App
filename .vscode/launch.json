@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Chrome With EasyFax",
+            "type": "chrome",
+            "request": "launch",
+            "url": "about:blank",
+            "runtimeArgs": [
+                "--disable-extensions-except=${workspaceFolder}",
+                "--load-extension=${workspaceFolder}",
+                "--user-data-dir=${workspaceFolder}/.vscode/chrome-profile"
+            ]
+        },
+        {
+            "name": "Launch Edge With EasyFax",
+            "type": "msedge",
+            "request": "launch",
+            "url": "about:blank",
+            "runtimeArgs": [
+                "--disable-extensions-except=${workspaceFolder}",
+                "--load-extension=${workspaceFolder}",
+                "--user-data-dir=${workspaceFolder}/.vscode/edge-profile"
+            ]
+        }
+    ]
+}

@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <div class="setup-screen" id="setup-screen" hidden>
+  <div class="setup-screen" id="setup-screen">
     <div class="setup-card">
       <div class="preview-banner" data-preview-banner hidden>
         Preview Mode. This page is running without browser extension APIs.
@@ -74,6 +74,10 @@
         </svg>
         <span>History</span>
       </button>
+      <button class="tab" id="tab-directory" role="tab" aria-selected="false" aria-controls="panel-directory">
+        <svg class="tab-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zm7 1a2 2 0 114 0 2 2 0 01-4 0zM2.5 14a3.5 3.5 0 013.5-3.5h1A3.5 3.5 0 0110.5 14v1H2.5v-1zm8 1v-.5a2.5 2.5 0 012.5-2.5h.5a2.5 2.5 0 012.5 2.5V15h-5.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Directory</span>
+      </button>
     </nav>
 
     <div class="panels">
@@ -85,9 +89,10 @@
               <span class="field-label">From</span>
               <input id="from-number" name="fromNumber" type="text" required value="+14252074289" readonly />
             </label>
-            <label class="field">
+            <label class="field to-field">
               <span class="field-label">To (Fax or Email)</span>
               <input id="to-number" name="toNumber" type="text" required placeholder="+13125550123 or doctor@example.com" />
+              <div id="to-suggestions" class="to-suggestions" hidden></div>
             </label>
           </div>
 
@@ -127,13 +132,59 @@
               <button type="button" class="history-filter-btn" data-filter="fax" aria-pressed="false">Fax</button>
               <button type="button" class="history-filter-btn" data-filter="email" aria-pressed="false">Email</button>
             </div>
+            <div class="history-live-note">Live updates every 10s while open.</div>
+            <div class="history-controls" role="group" aria-label="History search and filters">
+              <input id="history-search" type="search" class="history-input" placeholder="Search destination or recipient" />
+              <select id="history-status-filter" class="history-select" aria-label="Status filter">
+                <option value="all">All statuses</option>
+                <option value="inprogress">In progress</option>
+                <option value="delivered">Delivered</option>
+                <option value="failed">Failed</option>
+              </select>
+              <select id="history-date-filter" class="history-select" aria-label="Date range filter">
+                <option value="all">All time</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+              </select>
+            </div>
           </div>
-          <button id="refresh-faxes" type="button" class="btn-icon btn-refresh" title="Refresh" aria-label="Refresh fax list">
-            <svg viewBox="0 0 122.88 118.66" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M16.68,22.2c-1.78,2.21-3.43,4.55-5.06,7.46C5.63,40.31,3.1,52.39,4.13,64.2c1.01,11.54,5.43,22.83,13.37,32.27 c2.85,3.39,5.91,6.38,9.13,8.97c11.11,8.93,24.28,13.34,37.41,13.22c13.13-0.13,26.21-4.78,37.14-13.98 c3.19-2.68,6.18-5.73,8.91-9.13c6.4-7.96,10.51-17.29,12.07-27.14c1.53-9.67,0.59-19.83-3.07-29.66 c-3.49-9.35-8.82-17.68-15.78-24.21C96.7,8.33,88.59,3.76,79.2,1.48c-2.94-0.71-5.94-1.18-8.99-1.37c-3.06-0.2-6.19-0.13-9.4,0.22 c-2.01,0.22-3.46,2.03-3.24,4.04c0.22,2.01,2.03,3.46,4.04,3.24c2.78-0.31,5.49-0.37,8.14-0.2c2.65,0.17,5.23,0.57,7.73,1.17 c8.11,1.96,15.1,5.91,20.84,11.29c6.14,5.75,10.85,13.12,13.94,21.43c3.21,8.61,4.04,17.51,2.7,25.96 C113.59,75.85,110,84,104.4,90.96c-2.47,3.07-5.12,5.78-7.91,8.13c-9.59,8.07-21.03,12.15-32.5,12.26 c-11.47,0.11-23-3.76-32.76-11.61c-2.9-2.33-5.62-4.98-8.13-7.97c-6.92-8.22-10.77-18.09-11.66-28.2 c-0.91-10.37,1.32-20.99,6.57-30.33c1.59-2.82,3.21-5.07,5.01-7.24l0.53,14.7c0.07,2.02,1.76,3.6,3.78,3.52 c2.02-0.07,3.6-1.76,3.52-3.78l-0.85-23.42c-0.07-2.02-1.76-3.6-3.78-3.52c-0.13,0-0.25,0.02-0.37,0.03l0,0l-22.7,3.19 c-2,0.28-3.4,2.12-3.12,4.13c0.28,2,2.12,3.4,4.13,3.12L16.68,22.2L16.68,22.2z"/></svg>
-          </button>
+          <div class="history-actions">
+            <button id="export-history" type="button" class="btn-icon btn-export" title="Export CSV" aria-label="Export history to CSV">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v8m0 0l-3-3m3 3l3-3M4 13v2a2 2 0 002 2h8a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button id="refresh-faxes" type="button" class="btn-icon btn-refresh" title="Refresh" aria-label="Refresh fax list">
+              <svg viewBox="0 0 122.88 118.66" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M16.68,22.2c-1.78,2.21-3.43,4.55-5.06,7.46C5.63,40.31,3.1,52.39,4.13,64.2c1.01,11.54,5.43,22.83,13.37,32.27 c2.85,3.39,5.91,6.38,9.13,8.97c11.11,8.93,24.28,13.34,37.41,13.22c13.13-0.13,26.21-4.78,37.14-13.98 c3.19-2.68,6.18-5.73,8.91-9.13c6.4-7.96,10.51-17.29,12.07-27.14c1.53-9.67,0.59-19.83-3.07-29.66 c-3.49-9.35-8.82-17.68-15.78-24.21C96.7,8.33,88.59,3.76,79.2,1.48c-2.94-0.71-5.94-1.18-8.99-1.37c-3.06-0.2-6.19-0.13-9.4,0.22 c-2.01,0.22-3.46,2.03-3.24,4.04c0.22,2.01,2.03,3.46,4.04,3.24c2.78-0.31,5.49-0.37,8.14-0.2c2.65,0.17,5.23,0.57,7.73,1.17 c8.11,1.96,15.1,5.91,20.84,11.29c6.14,5.75,10.85,13.12,13.94,21.43c3.21,8.61,4.04,17.51,2.7,25.96 C113.59,75.85,110,84,104.4,90.96c-2.47,3.07-5.12,5.78-7.91,8.13c-9.59,8.07-21.03,12.15-32.5,12.26 c-11.47,0.11-23-3.76-32.76-11.61c-2.9-2.33-5.62-4.98-8.13-7.97c-6.92-8.22-10.77-18.09-11.66-28.2 c-0.91-10.37,1.32-20.99,6.57-30.33c1.59-2.82,3.21-5.07,5.01-7.24l0.53,14.7c0.07,2.02,1.76,3.6,3.78,3.52 c2.02-0.07,3.6-1.76,3.52-3.78l-0.85-23.42c-0.07-2.02-1.76-3.6-3.78-3.52c-0.13,0-0.25,0.02-0.37,0.03l0,0l-22.7,3.19 c-2,0.28-3.4,2.12-3.12,4.13c0.28,2,2.12,3.4,4.13,3.12L16.68,22.2L16.68,22.2z"/></svg>
+            </button>
+          </div>
         </div>
         <ul id="fax-list" class="fax-list"></ul>
         <p id="empty-state" class="empty-state">No faxes to display yet.</p>
+      </section>
+
+      <section id="panel-directory" class="panel" role="tabpanel" aria-labelledby="tab-directory" hidden>
+        <div class="history-head">
+          <div class="history-left">
+            <span class="history-count" id="directory-count"></span>
+            <div class="history-live-note">Saved MedSender clients and fax numbers.</div>
+            <div class="history-controls" role="group" aria-label="Directory controls">
+              <input id="directory-search" type="search" class="history-input" placeholder="Search client or fax number" />
+            </div>
+            <form id="directory-create-form" class="directory-create-form">
+              <input id="directory-create-name" type="text" class="history-input" placeholder="Contact or client name" maxlength="120" required />
+              <input id="directory-create-fax" type="text" class="history-input" placeholder="Recipient fax (optional)" />
+              <button type="submit" class="btn-primary directory-add-btn">Save</button>
+            </form>
+          </div>
+          <div class="history-actions">
+            <button id="directory-refresh" type="button" class="btn-icon btn-refresh" title="Refresh directory" aria-label="Refresh directory list">
+              <svg viewBox="0 0 122.88 118.66" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M16.68,22.2c-1.78,2.21-3.43,4.55-5.06,7.46C5.63,40.31,3.1,52.39,4.13,64.2c1.01,11.54,5.43,22.83,13.37,32.27 c2.85,3.39,5.91,6.38,9.13,8.97c11.11,8.93,24.28,13.34,37.41,13.22c13.13-0.13,26.21-4.78,37.14-13.98 c3.19-2.68,6.18-5.73,8.91-9.13c6.4-7.96,10.51-17.29,12.07-27.14c1.53-9.67,0.59-19.83-3.07-29.66 c-3.49-9.35-8.82-17.68-15.78-24.21C96.7,8.33,88.59,3.76,79.2,1.48c-2.94-0.71-5.94-1.18-8.99-1.37c-3.06-0.2-6.19-0.13-9.4,0.22 c-2.01,0.22-3.46,2.03-3.24,4.04c0.22,2.01,2.03,3.46,4.04,3.24c2.78-0.31,5.49-0.37,8.14-0.2c2.65,0.17,5.23,0.57,7.73,1.17 c8.11,1.96,15.1,5.91,20.84,11.29c6.14,5.75,10.85,13.12,13.94,21.43c3.21,8.61,4.04,17.51,2.7,25.96 C113.59,75.85,110,84,104.4,90.96c-2.47,3.07-5.12,5.78-7.91,8.13c-9.59,8.07-21.03,12.15-32.5,12.26 c-11.47,0.11-23-3.76-32.76-11.61c-2.9-2.33-5.62-4.98-8.13-7.97c-6.92-8.22-10.77-18.09-11.66-28.2 c-0.91-10.37,1.32-20.99,6.57-30.33c1.59-2.82,3.21-5.07,5.01-7.24l0.53,14.7c0.07,2.02,1.76,3.6,3.78,3.52 c2.02-0.07,3.6-1.76,3.52-3.78l-0.85-23.42c-0.07-2.02-1.76-3.6-3.78-3.52c-0.13,0-0.25,0.02-0.37,0.03l0,0l-22.7,3.19 c-2,0.28-3.4,2.12-3.12,4.13c0.28,2,2.12,3.4,4.13,3.12L16.68,22.2L16.68,22.2z"/></svg>
+            </button>
+          </div>
+        </div>
+        <ul id="directory-list" class="fax-list"></ul>
+        <p id="directory-empty" class="empty-state">No clients to display yet.</p>
+        <p id="directory-status" class="status-bar" role="status" aria-live="polite"></p>
       </section>
 
     </div>

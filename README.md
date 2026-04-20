@@ -36,3 +36,26 @@ This extension is a Medsender API helper that lets you:
 - API requests are made directly from the extension to api.medsender.com.
 - API key is stored in Chrome sync storage for convenience.
 - If your organization restricts key storage, move key handling to a secure backend and call that backend from the extension.
+
+## API sandbox test script (Step 3 and 4)
+
+Use the helper script to send a test fax and optionally trigger a test inbound fax event.
+
+1. Export your real test API key from the Medsender portal:
+	export MEDSENDER_API_KEY=sk_test_your_real_key
+2. Generate a sample PDF (no extra tools required):
+	bash scripts/generate_sample_pdf.sh /tmp/medsender-sample.pdf
+3. Run Step 3 (send fax):
+	bash scripts/test_fax_steps_3_4.sh /tmp/medsender-sample.pdf
+4. Optional Step 4 (simulate inbound fax + webhook payload):
+	RUN_INBOUND_TEST=true bash scripts/test_fax_steps_3_4.sh /tmp/medsender-sample.pdf
+
+Single command for Step 3:
+
+export MEDSENDER_API_KEY=sk_test_your_real_key && bash scripts/generate_sample_pdf.sh /tmp/medsender-sample.pdf && bash scripts/test_fax_steps_3_4.sh /tmp/medsender-sample.pdf
+
+Defaults used by the script:
+
+- from_number and inbound to_number: +14252074289
+- to_number for send fax: +14252074289 (override with TO_NUMBER)
+- inbound from_number: +12065550123 (override with INBOUND_FROM_NUMBER)

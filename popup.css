@@ -1,6 +1,7 @@
 :root {
   --bg: #f4f6f8;
   --surface: #ffffff;
+  --topbar-bg: #f0fdf8;
   --ink: #111827;
   --muted: #6b7280;
   --border: #e5e7eb;
@@ -18,9 +19,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  width: 380px;
+  width: 100%;
+  min-width: 320px;
+  max-width: 480px;
   min-height: 420px;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
   font-size: 13px;
   background: var(--bg);
   color: var(--ink);
@@ -92,7 +95,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px 10px;
-  background: var(--surface);
+  background: var(--topbar-bg);
+  border-top: 3px solid var(--accent);
   border-bottom: 1px solid var(--border);
 }
 .topbar-brand { display: flex; align-items: center; gap: 8px; }
@@ -120,7 +124,8 @@ body {
   display: flex;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 14px;
+  padding: 8px 10px;
+  gap: 4px;
 }
 .tab {
   flex: 1; border: none; background: transparent;
@@ -129,12 +134,12 @@ body {
   justify-content: center;
   gap: 6px;
   color: var(--muted); font: inherit; font-size: 13px; font-weight: 500;
-  padding: 10px 0; cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  padding: 8px 0; cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
 }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
-.tab:hover:not(.active) { color: var(--ink); }
+.tab.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+.tab:hover:not(.active) { color: var(--ink); background: var(--bg); }
 
 .tab-icon {
   width: 13px;
@@ -597,6 +602,176 @@ textarea { resize: none; }
 /* Apply animations */
 .panel {
   animation: fadeIn 0.3s ease-out;
+}
+
+/* ── Skeleton loading ─────────────────────────────────── */
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+}
+.skeleton-circle {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--border);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+.skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skeleton-line {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--border);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+.skeleton-line.medium { width: 65%; }
+.skeleton-line.short  { width: 40%; }
+.skeleton-chip {
+  flex-shrink: 0;
+  width: 52px; height: 20px;
+  border-radius: 20px;
+  background: var(--border);
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── Send button loading state ────────────────────────── */
+.btn-primary.sending {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+.btn-spinner {
+  width: 14px; height: 14px;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Illustrated empty state ──────────────────────────── */
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px 24px;
+  text-align: center;
+}
+.empty-state-card svg {
+  width: 40px; height: 40px;
+  color: var(--border);
+}
+.empty-state-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.empty-state-sub {
+  font-size: 11.5px;
+  color: #9ca3af;
+  line-height: 1.5;
+  max-width: 200px;
+}
+
+/* ── Dark mode ────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --topbar-bg: #0d2218;
+    --ink: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #334155;
+    --accent: #10b981;
+    --accent-dark: #059669;
+    --accent-light: #022c22;
+    --success: #4ade80;
+    --success-bg: #052e16;
+    --failure: #f87171;
+    --failure-bg: #450a0a;
+    --pending: #fbbf24;
+  }
+
+  .file-drop { background: var(--bg); }
+
+  input[type="text"],
+  input[type="url"],
+  input[type="email"],
+  input[type="password"],
+  textarea { background: var(--bg); }
+
+  .history-input,
+  .history-select { background: var(--bg); }
+
+  .to-suggestions {
+    background: var(--surface);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5);
+  }
+  .to-suggestion-head {
+    background: var(--bg);
+    border-bottom-color: var(--border);
+  }
+  .to-suggestion-title { color: var(--muted); }
+  .to-suggestion-close {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .to-suggestion-name { color: var(--ink); }
+  .to-suggestion-number { color: var(--muted); }
+  .to-suggestion-row:hover,
+  .to-suggestion-row:focus { background: var(--bg); }
+
+  .directory-number-chip {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--ink);
+  }
+  .directory-btn {
+    background: var(--surface);
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  .directory-btn:hover { color: var(--ink); }
+  .directory-source-tag {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .directory-inline-input {
+    background: var(--bg);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+
+  .retry-btn {
+    background: #1c1200;
+    border-color: #6b4c00;
+    color: var(--pending);
+  }
+  .retry-btn:hover { background: #2a1b00; }
+
+  .fax-status-icon.pending { background: #1c1200; }
+  .fax-badge.pending { background: #1c1200; color: var(--pending); }
+
+  .history-live-note { color: var(--muted); }
+  .empty-state-sub { color: var(--muted); }
+
+  .preview-banner {
+    background: linear-gradient(135deg, var(--accent-light) 0%, #011a10 100%);
+    border-color: #064e3b;
+    color: var(--accent);
+  }
 }
 
 .fax-row.animate-in {

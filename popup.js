@@ -100,6 +100,7 @@ init().catch((error) => {
 async function init() {
   setHardcodedFromNumber();
   syncPreviewBanners();
+  syncHistoryStatusFilterLabels();
 
   const settings = await getStoredSettings();
   if (!String(settings.apiKey || "").trim()) {
@@ -259,7 +260,12 @@ function bindAppUi() {
         const dt = new DataTransfer();
         dt.items.add(e.dataTransfer.files[0]);
         fileInput.files = dt.files;
-        if (fileLabel) fileLabel.textContent = e.dataTransfer.files[0].name;
+        if (fileLabel) {
+          const f = e.dataTransfer.files[0];
+          const kb = Math.round(f.size / 1024);
+          const sizeStr = kb > 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`;
+          fileLabel.textContent = `${f.name}  ·  ${sizeStr}`;
+        }
       }
     });
   }
@@ -639,6 +645,7 @@ async function onSubmitFax(event) {
     setStatus("Sending fax…");
   }
 
+  setSendButtonLoading(true);
   try {
     const endpoint = isEmailTarget ? "emails" : "sent_faxes";
     
@@ -724,6 +731,8 @@ async function onSubmitFax(event) {
   } catch (error) {
     clearAutoRefreshLoop();
     setStatus(`Failed to send: ${extractErrorMessage(error)}`, true);
+  } finally {
+    setSendButtonLoading(false);
   }
 }
 
@@ -793,6 +802,11 @@ async function renderFaxes(options = {}) {
 
   // Add spinning animation to refresh button
   refreshButton.classList.add("spinning");
+
+  // Show skeleton rows on initial load (no prior items yet)
+  if (!latestHistoryItems.length) {
+    showSkeletonRows();
+  }
 
   let settings;
   try {
@@ -898,8 +912,13 @@ function renderHistoryItems(items) {
 
   if (filtered.length === 0) {
     faxListEl.replaceChildren();
-    emptyStateEl.hidden = false;
-    emptyStateEl.textContent = "No history entries match current filters.";
+    const isFiltered = historyFilter !== "all" || historyStatusFilter !== "all" || historyDateFilter !== "all" || historySearchTerm;
+    if (isFiltered) {
+      emptyStateEl.hidden = false;
+      emptyStateEl.textContent = "No history entries match current filters.";
+    } else {
+      setHistoryEmptyState(emptyStateEl);
+    }
     return;
   }
 
@@ -2210,14 +2229,97 @@ function statusToProgressText(status) {
 
 function statusBadgeLabel(status) {
   const value = String(status || "").toLowerCase();
-  if (value === "success") return "delivered";
-  if (value === "failure") return "failed";
-  if (value === "busy") return "busy";
-  if (value === "noanswer") return "no answer";
-  if (value === "invalidnumber") return "invalid number";
-  if (value === "undelivered") return "undelivered";
-  if (value === "rejected") return "rejected";
-  return value || "unknown";
+  if (value === "success") return "Delivered";
+  if (value === "failure") return "Failed";
+  if (value === "busy") return "Busy";
+  if (value === "noanswer") return "No Answer";
+  if (value === "invalidnumber") return "Invalid Number";
+  if (value === "undelivered") return "Undelivered";
+  if (value === "rejected") return "Rejected";
+  if (["inprogress", "pending", "processing", "sending", "dialing", "retrying"].includes(value)) {
+    return "In Progress";
+  }
+  if (value === "queued") return "Queued";
+  if (!value) return "Unknown";
+
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function syncHistoryStatusFilterLabels() {
+  if (!historyStatusFilterEl) {
+    return;
+  }
+
+  const labelByValue = {
+    inprogress: statusBadgeLabel("inprogress"),
+    delivered: statusBadgeLabel("success"),
+    failed: statusBadgeLabel("failure")
+  };
+
+  for (const option of historyStatusFilterEl.options) {
+    const nextLabel = labelByValue[String(option.value || "")];
+    if (nextLabel) {
+      option.textContent = nextLabel;
+    }
+  }
+}
+
+function showSkeletonRows() {
+  emptyStateEl.hidden = true;
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < 3; i++) {
+    const li = document.createElement("li");
+    li.className = "skeleton-row";
+    li.innerHTML = `
+      <div class="skeleton-circle"></div>
+      <div class="skeleton-lines">
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="skeleton-chip"></div>
+    `;
+    fragment.appendChild(li);
+  }
+  faxListEl.replaceChildren(fragment);
+}
+
+function setHistoryEmptyState(el) {
+  el.innerHTML = `
+    <div class="empty-state-card">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="2" y="8" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M16 8V6a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M12 13v2m0 0l-1.5-1.5M12 15l1.5-1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="empty-state-title">No faxes or emails yet</div>
+      <div class="empty-state-sub">Sent faxes and secure email links will appear here.</div>
+    </div>
+  `;
+  el.hidden = false;
+}
+
+function setSendButtonLoading(loading) {
+  const btn = document.getElementById("send-btn");
+  if (!btn) return;
+  if (loading) {
+    btn.disabled = true;
+    btn.classList.add("sending");
+    btn.innerHTML = `
+      <svg class="btn-spinner" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2.5" stroke-dasharray="28" stroke-dashoffset="10" stroke-linecap="round"/>
+      </svg>
+      Sending\u2026
+    `;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("sending");
+    btn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M17 10H3M17 10l-5-5M17 10l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Send Fax`;
+  }
 }
 
 function normalizeFaxNumber(rawValue) {
@@ -2410,7 +2512,8 @@ function notifyStatusTransitions(items, previousByKey) {
       continue;
     }
 
-    const title = item.status === "success" ? "Fax delivered" : "Fax failed";
+    const itemLabel = item.kind === "email" ? "Email" : "Fax";
+    const title = `${itemLabel} ${statusBadgeLabel(item.status)}`;
     const message = item.kind === "email"
       ? `${title}: ${item.to}`
       : `${title}: ${item.from} -> ${item.to}`;

@@ -1,6 +1,6 @@
-# MedSender Chrome Extension
+# EasyFax Chrome Extension
 
-This extension is a Medsender API helper that lets you:
+This extension is an EasyFax helper for the MedSender API that lets you:
 
 - Save your Medsender API key and API base URL
 - Send a fax with a PDF file from the popup
@@ -36,6 +36,15 @@ This extension is a Medsender API helper that lets you:
 - API requests are made directly from the extension to api.medsender.com.
 - API key is stored in Chrome sync storage for convenience.
 - If your organization restricts key storage, move key handling to a secure backend and call that backend from the extension.
+
+## Build a release package
+
+Run `bash scripts/build_release_zip.sh` from the repo root.
+
+This creates two files in the project root:
+
+- `easyfax-extension-v<version>-rNNN.zip` (new revision each build)
+- `easyfax-extension-latest.zip`
 
 ## API sandbox test script (Step 3 and 4)
 
